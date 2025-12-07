@@ -4,6 +4,7 @@ import { leadAPI, websiteAPI, formAPI } from '../services/api';
 
 const Leads: React.FC = () => {
   const [selectedFormId, setSelectedFormId] = useState<string>('');
+  const [selectedSource, setSelectedSource] = useState<string>('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
 
@@ -19,10 +20,11 @@ const Leads: React.FC = () => {
   const allForms = websitesData?.flatMap((w: any) => w.forms || []) || [];
 
   const { data: leadsData, isLoading } = useQuery({
-    queryKey: ['leads', selectedFormId, startDate, endDate],
+    queryKey: ['leads', selectedFormId, selectedSource, startDate, endDate],
     queryFn: async () => {
       const params: any = {};
       if (selectedFormId) params.formId = selectedFormId;
+      if (selectedSource) params.source = selectedSource;
       if (startDate) params.startDate = startDate;
       if (endDate) params.endDate = endDate;
       
@@ -33,6 +35,7 @@ const Leads: React.FC = () => {
 
   const clearFilters = () => {
     setSelectedFormId('');
+    setSelectedSource('');
     setStartDate('');
     setEndDate('');
   };
@@ -44,7 +47,20 @@ const Leads: React.FC = () => {
       {/* Filters */}
       <div className="card mb-6">
         <h3 className="font-semibold mb-4">Filters</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label className="block text-sm font-medium mb-2">Source</label>
+            <select
+              value={selectedSource}
+              onChange={(e) => setSelectedSource(e.target.value)}
+              className="input"
+            >
+              <option value="">All Sources</option>
+              <option value="website">Website</option>
+              <option value="form">Form</option>
+            </select>
+          </div>
+
           <div>
             <label className="block text-sm font-medium mb-2">Form</label>
             <select
@@ -97,6 +113,7 @@ const Leads: React.FC = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b">
+                <th className="text-left py-3 px-4">Source</th>
                 <th className="text-left py-3 px-4">Form</th>
                 <th className="text-left py-3 px-4">Website</th>
                 <th className="text-left py-3 px-4">Data</th>
@@ -106,6 +123,15 @@ const Leads: React.FC = () => {
             <tbody>
               {leadsData?.map((lead: any) => (
                 <tr key={lead.id} className="border-b hover:bg-gray-50">
+                  <td className="py-3 px-4">
+                    <span className={`inline-block px-2 py-1 text-xs rounded ${
+                      lead.source === 'website' 
+                        ? 'bg-blue-100 text-blue-800' 
+                        : 'bg-green-100 text-green-800'
+                    }`}>
+                      {lead.source === 'website' ? 'Website' : 'Form'}
+                    </span>
+                  </td>
                   <td className="py-3 px-4">{lead.formName}</td>
                   <td className="py-3 px-4">
                     {lead.website?.name || lead.website?.url}
@@ -127,7 +153,7 @@ const Leads: React.FC = () => {
               
               {(!leadsData || leadsData.length === 0) && (
                 <tr>
-                  <td colSpan={4} className="text-center py-12 text-gray-500">
+                  <td colSpan={5} className="text-center py-12 text-gray-500">
                     No leads captured yet.
                   </td>
                 </tr>
